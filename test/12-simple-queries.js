@@ -14,7 +14,7 @@ describe('Simple queries', () => {
   let collection
   before((done) => {
     db = new Database({
-      url: 'http://root:@localhost:8529',
+      url: 'vstream://root:@localhost:8529',
       arangoVersion: ARANGO_VERSION
     })
     db.createDatabase(name)

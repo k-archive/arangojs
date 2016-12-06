@@ -8,7 +8,7 @@ describe('DocumentCollection API', () => {
   let collection
   before((done) => {
     db = new Database({
-      url: 'http://root:@localhost:8529',
+      url: 'vstream://root:@localhost:8529',
       arangoVersion: Number(process.env.ARANGO_VERSION || 30000)
     })
     db.createDatabase(name)

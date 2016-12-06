@@ -232,7 +232,7 @@ class BaseCollection {
       opts = {rev: opts}
     }
     const {promise, callback} = this._connection.promisify(cb)
-     
+
     this._api.patch(
       `/document/${this.name}`,
       newValues,
@@ -241,7 +241,7 @@ class BaseCollection {
     )
     return promise
   }
-  
+
   remove (documentHandle, opts, cb) {
     if (typeof opts === 'function') {
       cb = opts
@@ -628,12 +628,20 @@ class DocumentCollection extends BaseCollection {
 
   save (data, cb) {
     const {promise, callback} = this._connection.promisify(cb)
-    this._api.post(
-      '/document',
-      data,
-      {collection: this.name},
-      (err, res) => err ? callback(err) : callback(null, res.body)
-    )
+    if (this._connection.arangoMajor >= 3) {
+      this._api.post(
+        `/document/${this.name}`,
+        data,
+        (err, res) => err ? callback(err) : callback(null, res.body)
+      )
+    } else {
+      this._api.post(
+        '/document',
+        data,
+        {collection: this.name},
+        (err, res) => err ? callback(err) : callback(null, res.body)
+      )
+    }
     return promise
   }
 }
