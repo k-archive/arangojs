@@ -120,6 +120,7 @@ export default class Connection {
         expectBinary,
         body
       }, (err, res) => {
+        console.log('doRequest done', err)
         if (operation.retry(err)) return
         if (err) callback(err)
         else {
