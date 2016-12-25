@@ -42,6 +42,14 @@ export default class Route {
     if (!path) path = ''
     else if (this._path && path.charAt(0) !== '/') path = `/${path}`
     headers = headers ? {...this._headers, ...headers} : {...this._headers}
+    console.log('route.get', {
+      basePath: this._path,
+      path,
+      qs,
+      headers,
+      method: 'GET'
+    });
+    console.log('callback', callback);
     return this._connection.request({
       basePath: this._path,
       path,
