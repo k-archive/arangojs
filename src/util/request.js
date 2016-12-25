@@ -68,6 +68,7 @@ export default function (baseUrl, agentOptions, agent) {
         next()
         cb(...args)
       }
+      console.log('...options', options)
       const req = (isTls ? https : http).request(options, (res) => {
         const data = []
         res
