@@ -106,7 +106,7 @@ export default class Connection {
     const operation = retry.operation(this.retryOptions)
     console.log('...operation.attempt...')
     operation.attempt(function(currentAttempt) {
-      console.log('doRequest', {
+      console.log('doRequest ....', {
         url,
         headers: opts.headers,
         method: opts.method,
