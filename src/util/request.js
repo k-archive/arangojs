@@ -49,6 +49,7 @@ export default function (baseUrl, agentOptions, agent) {
   }
 
   function request ({method, url, headers, body, expectBinary}, cb) {
+    console.log('doing request', {method, url, headers, body, expectBinary})
     let path = baseUrlParts.pathname ? (
       url.pathname ? joinPath(baseUrlParts.pathname, url.pathname) : baseUrlParts.pathname
     ) : url.pathname
