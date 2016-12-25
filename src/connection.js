@@ -22,6 +22,7 @@ export default class Connection {
       this.config.headers['x-arango-version'] = this.config.arangoVersion
     }
     this.arangoMajor = Math.floor(this.config.arangoVersion / 10000)
+    console.log('*** Connection')
     const {request, auth, url} = createRequest(
       this.config.url,
       this.config.agentOptions,
