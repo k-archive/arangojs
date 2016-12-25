@@ -1,5 +1,5 @@
 {
-  "name": "arangojs",
+  "name": "arangojs-debug",
   "version": "5.4.2",
   "license": "Apache-2.0",
   "description": "The official ArangoDB JavaScript driver.",
