@@ -68,15 +68,18 @@ export default function (baseUrl, agentOptions, agent) {
       }
       console.log('... options', options)
       const req = (isTls ? https : http).request(options, (res) => {
+        console.log('request cb', res)
         const data = []
         res
         .on('data', (chunk) => data.push(chunk))
         .on('end', () => {
+          console.log('request end')
           res.body = data.join('')
           callback(null, res)
         })
       })
       req.on('error', (err) => {
+        console.log('error', err)
         err.request = req
         callback(err)
       })
