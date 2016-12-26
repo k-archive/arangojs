@@ -47,7 +47,7 @@ export default function (baseUrl, agentOptions, agent) {
     })
   }
 
-  function request ({method, url, headers, body, expectBinary}, cb) {
+  return function request ({method, url, headers, body}, cb) {
     let path = baseUrlParts.pathname ? (
       url.pathname ? joinPath(baseUrlParts.pathname, url.pathname) : baseUrlParts.pathname
     ) : url.pathname
@@ -60,8 +60,6 @@ export default function (baseUrl, agentOptions, agent) {
     options.port = baseUrlParts.port
     options.auth = baseUrlParts.auth
 
-    console.log('...doing request', options)
-
     queue.push((next) => {
       let callback = (...args) => {
         callback = () => undefined
@@ -73,10 +71,7 @@ export default function (baseUrl, agentOptions, agent) {
         res
         .on('data', (chunk) => data.push(chunk))
         .on('end', () => {
-          res.body = Buffer.concat(data)
-          if (!expectBinary) {
-            res.body = res.body.toString('utf-8')
-          }
+          res.body = data.join('')
           callback(null, res)
         })
       })
@@ -90,8 +85,4 @@ export default function (baseUrl, agentOptions, agent) {
 
     drainQueue()
   }
-
-  const auth = baseUrlParts.auth
-  delete baseUrlParts.auth
-  return {request, auth, url: baseUrlParts}
 }

@@ -25,6 +25,10 @@ function joinPath (a = '', b = '') {
 export default function (baseUrl, options) {
   if (!options) options = {}
   const baseUrlParts = parseUrl(baseUrl)
+  const i = baseUrlParts.auth ? baseUrlParts.auth.indexOf(':') : -1
+  const username = i !== -1 ? baseUrlParts.auth.slice(0, i) : (baseUrlParts.auth || undefined)
+  const password = i !== -1 ? baseUrlParts.auth.slice(i + 1) : (baseUrlParts.auth ? '' : undefined)
+  delete baseUrlParts.auth
 
   const queue = []
   const maxTasks = typeof options.maxSockets === 'number' ? options.maxSockets * 2 : Infinity
@@ -40,7 +44,11 @@ export default function (baseUrl, options) {
     })
   }
 
-  function request ({method, url, headers, body, expectBinary}, cb) {
+  return function request ({method, url, headers, body}, cb) {
+    if (typeof username === 'string' && !headers.authorization) {
+      headers.authorization = 'Basic ' + window.btoa(username + ':' + (password || ''))
+    }
+
     const urlParts = {
       ...baseUrlParts,
       pathname: url.pathname ? (
@@ -58,11 +66,9 @@ export default function (baseUrl, options) {
         cb(...args)
       }
       const req = xhr({
-        responseType: expectBinary ? 'blob' : 'text',
+        responseType: 'text',
         ...options,
         url: formatUrl(urlParts),
-        withCredentials: true,
-        useXDR: true,
         body,
         method,
         headers
@@ -77,8 +83,4 @@ export default function (baseUrl, options) {
 
     drainQueue()
   }
-
-  const auth = baseUrlParts.auth
-  delete baseUrlParts.auth
-  return {request, auth, url: baseUrlParts}
 }

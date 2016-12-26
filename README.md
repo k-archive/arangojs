@@ -2,39 +2,21 @@
 
 The official ArangoDB low-level JavaScript client.
 
-[![license - APACHE-2.0](https://img.shields.io/npm/l/arangojs.svg)](http://opensource.org/licenses/APACHE-2.0)
-[![Dependencies](https://img.shields.io/david/arangodb/arangojs.svg)](https://david-dm.org/arangodb/arangojs)
-[![Build status](https://img.shields.io/travis/arangodb/arangojs.svg)](https://travis-ci.org/arangodb/arangojs)
+[![license - APACHE-2.0](https://img.shields.io/npm/l/arangojs.svg)](http://opensource.org/licenses/APACHE-2.0) [![Dependencies](https://img.shields.io/david/arangodb/arangojs.svg)](https://david-dm.org/arangodb/arangojs)
 
 [![NPM status](https://nodei.co/npm/arangojs.png?downloads=true&stars=true)](https://npmjs.org/package/arangojs)
 
+[![Build status](https://img.shields.io/travis/arangodb/arangojs.svg)](https://travis-ci.org/arangodb/arangojs) [![Coverage Status](https://img.shields.io/coveralls/arangodb/arangojs.svg)](https://coveralls.io/r/arangodb/arangojs?branch=master) [![Codacy rating](https://img.shields.io/codacy/5fd86b5508cb4c559fd65e4c8059d800.svg)](https://www.codacy.com/public/me_4/arangojs_2)
+
 [![js-standard-style](https://cdn.rawgit.com/feross/standard/master/badge.svg)](https://github.com/feross/standard)
 
-# Compatibility
+The driver is being tested with ArangoDB 2.6, 2.7, 2.8 and the nightly development build using Node.js 0.12, 4.x (LTS) and the latest public release. Versions outside of this range may be compatible but are not officially supported.
 
-ArangoJS is compatible with ArangoDB 2.8, 3.0 and 3.1.
+As of version 4.0.0 of this driver, a minified standalone browser bundle is also available.
 
-The npm distribution of ArangoJS is compatible with Node.js 4, 6 and 7.
-
-The bower distribution of ArangoJS is compatible with most modern browsers.
-
-Versions outside this range may be compatible but are not actively supported.
-
-**Upgrade note**: If you want to use arangojs with ArangoDB 2.8 or earlier remember to set the appropriate `arangoVersion` option (`20800` for version 2.8.0). The current default value is `30000` (indicating compatibility with version 3.0.0 and newer).
-
-## Testing
-
-The driver is being tested against the latest release of ArangoDB 2.8, the two most recent releases of ArangoDB 3 (currently 3.0 and 3.1) and the nightly development build of ArangoDB using the [active LTS releases](https://github.com/nodejs/LTS) of Node.js (currently 4 and 6) as well as the latest public release (7).
-
-Older versions of ArangoDB and Node.js may be compatible but are not actively supported.
+**Upgrade note**: If you want to use arangojs with ArangoDB 2.8 or earlier remember to set the appropriate `arangoVersion` option (`20800` for version 2.8.0). The current default value is `30000` (indicating compatibility with version 3.0.0).
 
 # Install
-
-## With Yarn
-
-```sh
-yarn add arangojs
-```
 
 ## With NPM
 
@@ -60,25 +42,19 @@ npm run dist
 # Basic usage example
 
 ```js
-// Modern JavaScript
+// ES2015-style
 import arangojs, {Database, aql} from 'arangojs';
 let db1 = arangojs(); // convenience short-hand
 let db2 = new Database();
-let result = await db2.query(aql`RETURN ${Date.now()}`);
+let {query, bindVars} = aql`RETURN ${Date.now()}`;
 
 // or plain old Node-style
 var arangojs = require('arangojs');
 var db1 = arangojs();
 var db2 = new arangojs.Database();
-db2.query(
-  {
-    query: 'RETURN @arg0',
-    bindVars: {arg0: Date.now()}
-  },
-  function (err, result) {
-    // ...
-  }
-);
+var aql = arangojs.aql(['RETURN ', ''], Date.now());
+var query = aql.query;
+var bindVars = aql.bindVars;
 
 // Using a complex connection string with authentication
 let host = process.env.ARANGODB_HOST;
@@ -90,18 +66,6 @@ let db = arangojs({
   url: `http://${username}:${password}@${host}:${port}`,
   databaseName: database
 });
-
-// Or using a fully qualified URL containing the database path
-let db = arangojs({
-  url: `http://${username}:${password}@${host}:${port}/_db/${database}`,
-  databaseName: false // don't automatically append database path to URL
-});
-
-// Database name and credentials can be hot-swapped
-let db = arangojs(`http://${host}:${port}`);
-db.useDatabase(database);
-db.useBasicAuth(username, password);
-// or: db.useBearerAuth(token);
 
 // Using ArangoDB 2.8 compatibility mode
 let db = arangojs({
@@ -116,7 +80,7 @@ All asynchronous functions take an optional Node-style callback (or "errback") a
 * *err*: an *Error* object if an error occurred, or *null* if no error occurred.
 * *result*: the function's result (if applicable).
 
-For expected API errors, *err* will be an instance of *ArangoError* with an [*errorNum* as defined in the ArangoDB documentation](https://docs.arangodb.com/devel/Manual/Appendix/ErrorCodes.html). For any other error responses (4xx/5xx status code), *err* will be an instance of the apropriate [http-errors](https://github.com/jshttp/http-errors) error type. If the response indicates success but the response body could not be parsed, *err* will be a *SyntaxError*. In all of these cases the error object will additionally have a *response* property containing the server response object.
+For expected API errors, *err* will be an instance of *ArangoError*. For any other error responses (4xx/5xx status code), *err* will be an instance of the apropriate [http-errors](https://github.com/jshttp/http-errors) error type. If the response indicates success but the response body could not be parsed, *err* will be a *SyntaxError*. In all of these cases the error object will additionally have a *response* property containing the server response object.
 
 If `Promise` is defined globally, asynchronous functions return a promise if no callback is provided.
 
@@ -154,8 +118,6 @@ try {
   * [new Database](#new-database)
   * [Manipulating databases](#manipulating-databases)
     * [database.useDatabase](#databaseusedatabase)
-    * [database.useBasicAuth](#databaseusebasicauth)
-    * [database.useBearerAuth](#databaseusebearerauth)
     * [database.createDatabase](#databasecreatedatabase)
     * [database.get](#databaseget)
     * [database.listDatabases](#databaselistdatabases)
@@ -246,7 +208,6 @@ try {
   * [Manipulating documents](#manipulating-documents)
     * [collection.replace](#collectionreplace)
     * [collection.update](#collectionupdate)
-    * [collection.bulkUpdate](#collectionbulkupdate)
     * [collection.remove](#collectionremove)
     * [collection.list](#collectionlist)
 * [DocumentCollection API](#documentcollection-api)
@@ -306,7 +267,7 @@ If *config* is a string, it will be interpreted as *config.url*.
 
     Base URL of the ArangoDB server.
 
-    If you want to use ArangoDB with HTTP Basic authentication, you can provide the credentials as part of the URL, e.g. `http://user:pass@localhost:8529`. You can still override these credentials at any time using the *useBasicAuth* or *useBearerAuth* methods.
+    If you want to use ArangoDB with HTTP Basic authentication, you can provide the credentials as part of the URL, e.g. `http://user:pass@localhost:8529`.
 
     The driver automatically uses HTTPS if you specify an HTTPS *url*.
 
@@ -325,8 +286,6 @@ If *config* is a string, it will be interpreted as *config.url*.
 
     Name of the active database.
 
-    If this option is explicitly set to `false`, the *url* is expected to contain the database path and the *useDatabase* method can not be used to switch databases.
-
   * **arangoVersion**: `number` (Default: `30000`)
 
     Value of the `x-arango-version` header.
@@ -334,9 +293,6 @@ If *config* is a string, it will be interpreted as *config.url*.
   * **headers**: `Object` (optional)
 
     An object with additional headers to send with every request.
-
-    Header names should always be lowercase. If an `"authorization"` header is provided,
-    any user credentials that are part of the *url* will be overridden.
 
   * **agent**: `Agent` (optional)
 
@@ -360,15 +316,9 @@ If *config* is a string, it will be interpreted as *config.url*.
 
     By default the global `Promise` constructor will be used if available.
 
-  * **retryConnection**: `boolean` (Default: `false`)
-
-    Whether to automatically retry in case of a connection error.
-
-    Will retry forever if `true`.
-
 ### Manipulating databases
 
-These functions implement the [HTTP API for manipulating databases](https://docs.arangodb.com/latest/HTTP/Database/index.html).
+These functions implement the [HTTP API for manipulating databases](https://docs.arangodb.com/HttpDatabase/index.html).
 
 #### database.useDatabase
 
@@ -388,52 +338,6 @@ Updates the *Database* instance and its connection string to use the given *data
 var db = require('arangojs')();
 db.useDatabase('test');
 // The database instance now uses the database "test".
-```
-
-#### database.useBasicAuth
-
-`database.useBasicAuth(username, password): this`
-
-Updates the *Database* instance's `authorization` header to use Basic authentication with the given *username* and *password*, then returns itself.
-
-**Arguments**
-
-* **username**: `string` (Default: `"root"`)
-
-  The username to authenticate with.
-
-* **password**: `string` (Default: `""`)
-
-  The password to authenticate with.
-
-**Examples**
-
-```js
-var db = require('arangojs')();
-db.useDatabase('test')
-db.useBasicAuth('admin', 'hunter2');
-// The database instance now uses the database "test"
-// with the username "admin" and password "hunter2".
-```
-
-#### database.useBearerAuth
-
-`database.useBearerAuth(token): this`
-
-Updates the *Database* instance's `authorization` header to use Bearer authentication with the given authentication token, then returns itself.
-
-**Arguments**
-
-* **token**: `string`
-
-  The token to authenticate with.
-
-**Examples**
-
-```js
-var db = require('arangojs')();
-db.useBearerAuth('keyboardcat');
-// The database instance now uses Bearer authentication.
 ```
 
 #### database.createDatabase
@@ -572,7 +476,7 @@ db.truncate(false)
 
 ### Accessing collections
 
-These functions implement the [HTTP API for accessing collections](https://docs.arangodb.com/latest/HTTP/Collection/Getting.html).
+These functions implement the [HTTP API for accessing collections](https://docs.arangodb.com/HttpCollection/Getting.html).
 
 #### database.collection
 
@@ -680,7 +584,7 @@ db.listCollections(false)
 
 ### Accessing graphs
 
-These functions implement the [HTTP API for accessing general graphs](https://docs.arangodb.com/latest/HTTP/Gharial/index.html).
+These functions implement the [HTTP API for accessing general graphs](https://docs.arangodb.com/HttpGharial/index.html).
 
 #### database.graph
 
@@ -722,7 +626,7 @@ db.graphs()
 
 ### Transactions
 
-This function implements the [HTTP API for transactions](https://docs.arangodb.com/latest/HTTP/Transaction/index.html).
+This function implements the [HTTP API for transactions](https://docs.arangodb.com/HttpTransaction/index.html).
 
 #### database.transaction
 
@@ -748,9 +652,9 @@ Performs a server-side transaction and returns its return value.
 
   A string evaluating to a JavaScript function to be executed on the server.
 
-* **params**: `Object` (optional)
+* **params**: `Array<any>` (optional)
 
-  Available as variable `params` when the *action* function is being executed on server. Check the example below.
+  Parameters that will be passed to the *action* function.
 
 * **lockTimeout**: `number` (optional)
 
@@ -760,7 +664,7 @@ If *collections* is an array or string, it will be treated as *collections.write
 
 Please note that while *action* should be a string evaluating to a well-formed JavaScript function, it's not possible to pass in a JavaScript function directly because the function needs to be evaluated on the server and will be transmitted in plain text.
 
-For more information on transactions, see [the HTTP API documentation for transactions](https://docs.arangodb.com/latest/HTTP/Transaction/index.html).
+For more information on transactions, see [the HTTP API documentation for transactions](https://docs.arangodb.com/HttpTransaction/index.html).
 
 **Examples**
 
@@ -769,9 +673,9 @@ var db = require('arangojs')();
 var action = String(function () {
     // This code will be executed inside ArangoDB!
     var db = require('org/arangodb').db;
-    return db._query('FOR user IN _users FILTER user.age > @maxage RETURN u.user',{maxage:params.age}).toArray<any>();
+    return db._query('FOR user IN _users RETURN u.user').toArray<any>();
 });
-db.transaction({read: '_users'}, action, {age:12})
+db.transaction({read: '_users'}, action)
 .then(result => {
     // result contains the return value of the action
 });
@@ -779,7 +683,7 @@ db.transaction({read: '_users'}, action, {age:12})
 
 ### Queries
 
-This function implements the [HTTP API for single roundtrip AQL queries](https://docs.arangodb.com/latest/HTTP/AqlQueryCursor/QueryResults.html).
+This function implements the [HTTP API for single roundtrip AQL queries](https://docs.arangodb.com/HttpAqlQueryCursor/QueryResults.html).
 
 For collection-specific queries see [simple queries](#simple-queries).
 
@@ -887,7 +791,7 @@ db.query(
 
 ### Managing AQL user functions
 
-These functions implement the [HTTP API for managing AQL user functions](https://docs.arangodb.com/latest/HTTP/AqlUserFunctions/index.html).
+These functions implement the [HTTP API for managing AQL user functions](https://docs.arangodb.com/HttpAqlUserFunctions/index.html).
 
 #### database.listFunctions
 
@@ -1707,13 +1611,13 @@ route.request({
 
 ## Collection API
 
-These functions implement the [HTTP API for manipulating collections](https://docs.arangodb.com/latest/HTTP/Collection/index.html).
+These functions implement the [HTTP API for manipulating collections](https://docs.arangodb.com/HttpCollection/index.html).
 
 The *Collection API* is implemented by all *Collection* instances, regardless of their specific type. I.e. it represents a shared subset between instances of [*DocumentCollection*](#documentcollection-api), [*EdgeCollection*](#edgecollection-api), [*GraphVertexCollection*](#graphvertexcollection-api) and [*GraphEdgeCollection*](#graphedgecollection-api).
 
 ### Getting information about the collection
 
-See [the HTTP API documentation](https://docs.arangodb.com/latest/HTTP/Collection/Getting.html) for details.
+See [the HTTP API documentation](https://docs.arangodb.com/HttpCollection/Getting.html) for details.
 
 #### collection.get
 
@@ -1810,7 +1714,7 @@ Retrieves the collection checksum.
 
 * **opts**: `Object` (optional)
 
-  For information on the possible options see [the HTTP API for getting collection information](https://docs.arangodb.com/latest/HTTP/Collection/Getting.html).
+  For information on the possible options see [the HTTP API for getting collection information](https://docs.arangodb.com/HttpCollection/Getting.html).
 
 **Examples**
 
@@ -1825,7 +1729,7 @@ collection.checksum()
 
 ### Manipulating the collection
 
-These functions implement [the HTTP API for modifying collections](https://docs.arangodb.com/latest/HTTP/Collection/Modifying.html).
+These functions implement [the HTTP API for modifying collections](https://docs.arangodb.com/HttpCollection/Modifying.html).
 
 #### collection.create
 
@@ -1837,7 +1741,7 @@ Creates a collection with the given *properties* for this collection's name, the
 
 * **properties**: `Object` (optional)
 
-  For more information on the *properties* object, see [the HTTP API documentation for creating collections](https://docs.arangodb.com/latest/HTTP/Collection/Creating.html).
+  For more information on the *properties* object, see [the HTTP API documentation for creating collections](https://docs.arangodb.com/HttpCollection/Creating.html).
 
 **Examples**
 
@@ -1910,7 +1814,7 @@ Replaces the properties of the collection.
 
 * **properties**: `Object`
 
-  For information on the *properties* argument see [the HTTP API for modifying collections](https://docs.arangodb.com/latest/HTTP/Collection/Modifying.html).
+  For information on the *properties* argument see [the HTTP API for modifying collections](https://docs.arangodb.com/HttpCollection/Modifying.html).
 
 **Examples**
 
@@ -1980,23 +1884,10 @@ collection.truncate()
 
 #### collection.drop
 
-`async collection.drop([properties]): Object`
+`async collection.drop(): Object`
 
 Deletes the collection from the database.
 
-**Arguments**
-
-* **properties**: `Object` (optional)
-
-  An object with the following properties:
-
-  * **isSystem**: `Boolean` (Default: `false`)
-
-    Whether the collection should be dropped even if it is a system collection.
-
-    This parameter must be set to `true` when dropping a system collection.
-
-  For more information on the *properties* object, see [the HTTP API documentation for dropping collections](https://docs.arangodb.com/3/HTTP/Collection/Creating.html#drops-a-collection).
 **Examples**
 
 ```js
@@ -2010,7 +1901,7 @@ collection.drop()
 
 ### Manipulating indexes
 
-These functions implement the [HTTP API for manipulating indexes](https://docs.arangodb.com/latest/HTTP/Indexes/index.html).
+These functions implement the [HTTP API for manipulating indexes](https://docs.arangodb.com/HttpIndexes/index.html).
 
 #### collection.createIndex
 
@@ -2022,7 +1913,7 @@ Creates an arbitrary index on the collection.
 
 * **details**: `Object`
 
-  For information on the possible properties of the *details* object, see [the HTTP API for manipulating indexes](https://docs.arangodb.com/latest/HTTP/Indexes/WorkingWith.html).
+  For information on the possible properties of the *details* object, see [the HTTP API for manipulating indexes](https://docs.arangodb.com/HttpIndexes/WorkingWith.html).
 
 **Examples**
 
@@ -2060,7 +1951,7 @@ Creates a cap constraint index on the collection.
 
 If *size* is a number, it will be interpreted as *size.size*.
 
-For more information on the properties of the *size* object see [the HTTP API for creating cap constraints](https://docs.arangodb.com/latest/HTTP/Indexes/Cap.html).
+For more information on the properties of the *size* object see [the HTTP API for creating cap constraints](https://docs.arangodb.com/HttpIndexes/Cap.html).
 
 **Examples**
 
@@ -2101,7 +1992,7 @@ Creates a hash index on the collection.
 
   Additional options for this index. If the value is a boolean, it will be interpreted as *opts.unique*.
 
-For more information on hash indexes, see [the HTTP API for hash indexes](https://docs.arangodb.com/latest/HTTP/Indexes/Hash.html).
+For more information on hash indexes, see [the HTTP API for hash indexes](https://docs.arangodb.com/HttpIndexes/Hash.html).
 
 **Examples**
 
@@ -2142,7 +2033,7 @@ Creates a skiplist index on the collection.
 
   Additional options for this index. If the value is a boolean, it will be interpreted as *opts.unique*.
 
-For more information on skiplist indexes, see [the HTTP API for skiplist indexes](https://docs.arangodb.com/latest/HTTP/Indexes/Skiplist.html).
+For more information on skiplist indexes, see [the HTTP API for skiplist indexes](https://docs.arangodb.com/HttpIndexes/Skiplist.html).
 
 **Examples**
 
@@ -2183,7 +2074,7 @@ Creates a geo-spatial index on the collection.
 
   An object containing additional properties of the index.
 
-For more information on the properties of the *opts* object see [the HTTP API for manipulating geo indexes](https://docs.arangodb.com/latest/HTTP/Indexes/Geo.html).
+For more information on the properties of the *opts* object see [the HTTP API for manipulating geo indexes](https://docs.arangodb.com/HttpIndexes/Geo.html).
 
 **Examples**
 
@@ -2224,7 +2115,7 @@ Creates a fulltext index on the collection.
 
   Minimum character length of words to index. Uses a server-specific default value if not specified.
 
-For more information on fulltext indexes, see [the HTTP API for fulltext indexes](https://docs.arangodb.com/latest/HTTP/Indexes/Fulltext.html).
+For more information on fulltext indexes, see [the HTTP API for fulltext indexes](https://docs.arangodb.com/HttpIndexes/Fulltext.html).
 
 **Examples**
 
@@ -2338,7 +2229,7 @@ collection.createFulltextIndex('description')
 
 ### Simple queries
 
-These functions implement the [HTTP API for simple queries](https://docs.arangodb.com/latest/HTTP/SimpleQuery/index.html).
+These functions implement the [HTTP API for simple queries](https://docs.arangodb.com/HttpSimpleQuery/index.html).
 
 #### collection.all
 
@@ -2350,7 +2241,7 @@ Performs a query to fetch all documents in the collection. Returns a [new *Curso
 
 * **opts**: `Object` (optional)
 
-  For information on the possible options see [the HTTP API for returning all documents](https://docs.arangodb.com/latest/HTTP/SimpleQuery/index.html#return-all-documents).
+  For information on the possible options see [the HTTP API for returning all documents](https://docs.arangodb.com/HttpSimpleQuery/index.html#return-all-documents).
 
 #### collection.any
 
@@ -2370,7 +2261,7 @@ Performs a query to fetch the first documents in the collection. Returns an arra
 
 * **opts**: `Object` (optional)
 
-  For information on the possible options see [the HTTP API for returning the first documents of a collection](https://docs.arangodb.com/latest/HTTP/SimpleQuery/index.html#find-documents-matching-an-example).
+  For information on the possible options see [the HTTP API for returning the first documents of a collection](https://docs.arangodb.com/HttpSimpleQuery/index.html#first-document-of-a-collection).
 
   If *opts* is a number it is treated as *opts.count*.
 
@@ -2386,7 +2277,7 @@ Performs a query to fetch the last documents in the collection. Returns an array
 
 * **opts**: `Object` (optional)
 
-  For information on the possible options see [the HTTP API for returning the last documents of a collection](https://docs.arangodb.com/latest/HTTP/SimpleQuery/index.html#last-document-of-a-collection).
+  For information on the possible options see [the HTTP API for returning the last documents of a collection](https://docs.arangodb.com/HttpSimpleQuery/index.html#last-document-of-a-collection).
 
   If *opts* is a number it is treated as *opts.count*.
 
@@ -2404,7 +2295,7 @@ Performs a query to fetch all documents in the collection matching the given *ex
 
 * **opts**: *Object* (optional)
 
-  For information on the possible options see [the HTTP API for fetching documents by example](https://docs.arangodb.com/latest/HTTP/SimpleQuery/index.html#find-documents-matching-an-example).
+  For information on the possible options see [the HTTP API for fetching documents by example](https://docs.arangodb.com/HttpSimpleQuery/index.html#find-documents-matching-an-example).
 
 #### collection.firstExample
 
@@ -2432,7 +2323,7 @@ Removes all documents in the collection matching the given *example*.
 
 * **opts**: *Object* (optional)
 
-  For information on the possible options see [the HTTP API for removing documents by example](https://docs.arangodb.com/latest/HTTP/SimpleQuery/index.html#remove-documents-by-example).
+  For information on the possible options see [the HTTP API for removing documents by example](https://docs.arangodb.com/HttpSimpleQuery/index.html#remove-documents-by-example).
 
 #### collection.replaceByExample
 
@@ -2452,7 +2343,7 @@ Replaces all documents in the collection matching the given *example* with the g
 
 * **opts**: *Object* (optional)
 
-  For information on the possible options see [the HTTP API for replacing documents by example](https://docs.arangodb.com/latest/HTTP/SimpleQuery/index.html#replace-documents-by-example).
+  For information on the possible options see [the HTTP API for replacing documents by example](https://docs.arangodb.com/HttpSimpleQuery/index.html#replace-documents-by-example).
 
 #### collection.updateByExample
 
@@ -2472,7 +2363,7 @@ Updates (patches) all documents in the collection matching the given *example* w
 
 * **opts**: *Object* (optional)
 
-  For information on the possible options see [the HTTP API for updating documents by example](https://docs.arangodb.com/latest/HTTP/SimpleQuery/index.html#update-documents-by-example).
+  For information on the possible options see [the HTTP API for updating documents by example](https://docs.arangodb.com/HttpSimpleQuery/index.html#update-documents-by-example).
 
 #### collection.lookupByKeys
 
@@ -2500,7 +2391,7 @@ Deletes the documents with the given *keys* from the collection.
 
 * **opts**: *Object* (optional)
 
-  For information on the possible options see [the HTTP API for removing documents by keys](https://docs.arangodb.com/latest/HTTP/SimpleQuery/index.html#remove-documents-by-their-keys).
+  For information on the possible options see [the HTTP API for removing documents by keys](https://docs.arangodb.com/HttpSimpleQuery/index.html#remove-documents-by-their-keys).
 
 #### collection.fulltext
 
@@ -2520,11 +2411,11 @@ Performs a fulltext query in the given *fieldName* on the collection.
 
 * **opts**: *Object* (optional)
 
-  For information on the possible options see [the HTTP API for fulltext queries](https://docs.arangodb.com/latest/HTTP/Indexes/Fulltext.html).
+  For information on the possible options see [the HTTP API for fulltext queries](https://docs.arangodb.com/HttpIndexes/Fulltext.html).
 
 ### Bulk importing documents
 
-This function implements the [HTTP API for bulk imports](https://docs.arangodb.com/latest/HTTP/BulkImports/index.html).
+This function implements the [HTTP API for bulk imports](https://docs.arangodb.com/HttpBulkImports/index.html).
 
 #### collection.import
 
@@ -2574,7 +2465,7 @@ Bulk imports the given *data* into the collection.
 
 If *data* is a JavaScript array, it will be transmitted as a line-delimited JSON stream. If *opts.type* is set to `"array"`, it will be transmitted as regular JSON instead. If *data* is a string, it will be transmitted as it is without any processing.
 
-For more information on the *opts* object, see [the HTTP API documentation for bulk imports](https://docs.arangodb.com/latest/HTTP/BulkImports/ImportingSelfContained.html).
+For more information on the *opts* object, see [the HTTP API documentation for bulk imports](https://docs.arangodb.com/HttpBulkImports/ImportingSelfContained.html).
 
 **Examples**
 
@@ -2626,7 +2517,7 @@ collection.import(
 
 ### Manipulating documents
 
-These functions implement the [HTTP API for manipulating documents](https://docs.arangodb.com/latest/HTTP/Document/index.html).
+These functions implement the [HTTP API for manipulating documents](https://docs.arangodb.com/HttpDocument/index.html).
 
 #### collection.replace
 
@@ -2667,7 +2558,7 @@ Replaces the content of the document with the given *documentHandle* with the gi
 
 If a string is passed instead of an options object, it will be interpreted as the *rev* option.
 
-For more information on the *opts* object, see [the HTTP API documentation for working with documents](https://docs.arangodb.com/latest/HTTP/Document/WorkingWithDocuments.html).
+For more information on the *opts* object, see [the HTTP API documentation for working with documents](https://docs.arangodb.com/HttpDocument/WorkingWithDocuments.html).
 
 **Examples**
 
@@ -2739,7 +2630,7 @@ Updates (merges) the content of the document with the given *documentHandle* wit
 
 If a string is passed instead of an options object, it will be interpreted as the *rev* option.
 
-For more information on the *opts* object, see [the HTTP API documentation for working with documents](https://docs.arangodb.com/latest/HTTP/Document/WorkingWithDocuments.html).
+For more information on the *opts* object, see [the HTTP API documentation for working with documents](https://docs.arangodb.com/HttpDocument/WorkingWithDocuments.html).
 
 **Examples**
 
@@ -2759,72 +2650,6 @@ collection.save(doc)
           doc3._rev === doc2._rev;
           doc3.number === 2;
           doc3.hello === doc.hello;
-        });
-    });
-});
-```
-#### collection.bulkUpdate
-
-`async collection.bulkUpdate(documents, [opts]): Object`
-
-Updates (merges) the content of the documents with the given *documents* and returns an array containing the documents' metadata.
-
-**Note**: This method is new in 3.0 and is available when using the driver with ArangoDB 3.0 and higher.
-
-**Arguments**
-
-* **documents**: `Array<Object>`
-
-  Documents to update. Each object must have either the `_id` or the `_key` property.
-
-* **opts**: `Object` (optional)
-
-  If *opts* is set, it must be an object with any of the following properties:
-
-  * **waitForSync**: `boolean` (Default: `false`)
-
-    Wait until document has been synced to disk.
-
-  * **keepNull**: `boolean` (Default: `true`)
-
-    If set to `false`, properties with a value of `null` indicate that a property should be deleted.
-
-  * **mergeObjects**: `boolean` (Default: `true`)
-
-    If set to `false`, object properties that already exist in the old document will be overwritten rather than merged. This does not affect arrays.
-
-  * **returnOld**:  `boolean` (Default: `false`)
-
-    If set to `false`, return additionally the complete previous revision of the changed documents under the attribute `old` in the result.
-
-  * **returnNew**:  `boolean` (Default: `false`)
-
-    If set to `false`, return additionally the complete new documents under the attribute `new` in the result.  
-
-  * **ignoreRevs**: `boolean` (Default: `true`)
-
-    By default, or if this is set to true, the _rev attributes in the given documents are ignored. If this is set to false, then any _rev attribute given in a body document is taken as a precondition. The document is only updated if the current revision is the one specified.
-
-For more information on the *opts* object, see [the HTTP API documentation for working with documents](https://docs.arangodb.com/latest/HTTP/Document/WorkingWithDocuments.html).
-
-**Examples**
-
-```js
-var db = require('arangojs')();
-var collection = db.collection('some-collection');
-var doc1 = {number: 1, hello: 'world1'};
-collection.save(doc1)
-.then(doc1saved => {
-    console.log(JSON.stringify(doc1saved));
-    var doc2 = {number: 2, hello: 'world2'};
-    collection.save(doc2)
-    .then(doc2saved => {
-        console.log(JSON.stringify(doc2saved));
-        doc1 = {_key: doc1saved._key, number: 3};
-        doc2 = {_key: doc2saved._key, number: 4};
-        collection.bulkUpdate([doc1, doc2], {returnNew: true})
-        .then(result => {
-            console.log(JSON.stringify(result));
         });
     });
 });
@@ -2865,7 +2690,7 @@ Deletes the document with the given *documentHandle* from the collection.
 
 If a string is passed instead of an options object, it will be interpreted as the *rev* option.
 
-For more information on the *opts* object, see [the HTTP API documentation for working with documents](https://docs.arangodb.com/latest/HTTP/Document/WorkingWithDocuments.html).
+For more information on the *opts* object, see [the HTTP API documentation for working with documents](https://docs.arangodb.com/HttpDocument/WorkingWithDocuments.html).
 
 **Examples**
 
@@ -3172,7 +2997,7 @@ Performs a traversal starting from the given *startVertex* and following edges c
 
 * **opts**: `Object`
 
-  See [the HTTP API documentation](https://docs.arangodb.com/latest/HTTP/Traversal/index.html) for details on the additional arguments.
+  See [the HTTP API documentation](https://docs.arangodb.com/HttpTraversal/index.html) for details on the additional arguments.
 
   Please note that while *opts.filter*, *opts.visitor*, *opts.init*, *opts.expander* and *opts.sort* should be strings evaluating to well-formed JavaScript code, it's not possible to pass in JavaScript functions directly because the code needs to be evaluated on the server and will be transmitted in plain text.
 
@@ -3199,7 +3024,7 @@ collection.import([
 
 ## Graph API
 
-These functions implement the [HTTP API for manipulating graphs](https://docs.arangodb.com/latest/HTTP/Gharial/index.html).
+These functions implement the [HTTP API for manipulating graphs](https://docs.arangodb.com/HttpGharial/index.html).
 
 ### graph.get
 
@@ -3228,7 +3053,7 @@ Creates a graph with the given *properties* for this graph's name, then returns 
 
 * **properties**: `Object`
 
-  For more information on the *properties* object, see [the HTTP API documentation for creating graphs](https://docs.arangodb.com/latest/HTTP/Gharial/Management.html).
+  For more information on the *properties* object, see [the HTTP API documentation for creating graphs](https://docs.arangodb.com/HttpGharial/Management.html).
 
 **Examples**
 
@@ -3396,7 +3221,7 @@ Adds the given edge definition *definition* to the graph.
 
 * **definition**: `Object`
 
-  For more information on edge definitions see [the HTTP API for managing graphs](https://docs.arangodb.com/latest/HTTP/Gharial/Management.html).
+  For more information on edge definitions see [the HTTP API for managing graphs](https://docs.arangodb.com/HttpGharial/Management.html).
 
 **Examples**
 
@@ -3428,7 +3253,7 @@ Replaces the edge definition for the edge collection named *collectionName* with
 
 * **definition**: `Object`
 
-  For more information on edge definitions see [the HTTP API for managing graphs](https://docs.arangodb.com/latest/HTTP/Gharial/Management.html).
+  For more information on edge definitions see [the HTTP API for managing graphs](https://docs.arangodb.com/HttpGharial/Management.html).
 
 **Examples**
 
@@ -3497,7 +3322,7 @@ Performs a traversal starting from the given *startVertex* and following edges c
 
 * **opts**: `Object`
 
-  See [the HTTP API documentation](https://docs.arangodb.com/latest/HTTP/Traversal/index.html) for details on the additional arguments.
+  See [the HTTP API documentation](https://docs.arangodb.com/HttpTraversal/index.html) for details on the additional arguments.
 
   Please note that while *opts.filter*, *opts.visitor*, *opts.init*, *opts.expander* and *opts.sort* should be strings evaluating to well-formed JavaScript functions, it's not possible to pass in JavaScript functions directly because the functions need to be evaluated on the server and will be transmitted in plain text.
 
@@ -3836,7 +3661,7 @@ Performs a traversal starting from the given *startVertex* and following edges c
 
 * **opts**: `Object`
 
-  See [the HTTP API documentation](https://docs.arangodb.com/latest/HTTP/Traversal/index.html) for details on the additional arguments.
+  See [the HTTP API documentation](https://docs.arangodb.com/HttpTraversal/index.html) for details on the additional arguments.
 
   Please note that while *opts.filter*, *opts.visitor*, *opts.init*, *opts.expander* and *opts.sort* should be strings evaluating to well-formed JavaScript code, it's not possible to pass in JavaScript functions directly because the code needs to be evaluated on the server and will be transmitted in plain text.
 
