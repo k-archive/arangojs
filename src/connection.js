@@ -22,7 +22,6 @@ export default class Connection {
       this.config.headers['x-arango-version'] = this.config.arangoVersion
     }
     this.arangoMajor = Math.floor(this.config.arangoVersion / 10000)
-    console.log('*** Connection')
     const {request, auth, url} = createRequest(
       this.config.url,
       this.config.agentOptions,
@@ -105,15 +104,7 @@ export default class Connection {
     const url = this._buildUrl(opts)
     const doRequest = this._request
     const operation = retry.operation(this.retryOptions)
-    console.log('...operation.attempt...')
     operation.attempt(function(currentAttempt) {
-      console.log('... doRequest ....', {
-        url,
-        headers: opts.headers,
-        method: opts.method,
-        expectBinary,
-        body
-      })
       doRequest({
         url,
         headers: opts.headers,
@@ -121,7 +112,6 @@ export default class Connection {
         expectBinary,
         body
       }, (err, res) => {
-        console.log('doRequest done', err)
         if (operation.retry(err)) return
         if (err) callback(err)
         else {

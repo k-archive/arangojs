@@ -619,13 +619,9 @@ class DocumentCollection extends BaseCollection {
 
   document (documentHandle, cb) {
     const {promise, callback} = this._connection.promisify(cb)
-    console.log('...getting', documentHandle, this._documentPath(documentHandle))
     this._api.get(
       this._documentPath(documentHandle),
-      (err, res) => {
-        console.log('...got', documentHandle, this._documentPath(documentHandle), err)
-        err ? callback(err) : callback(null, res.body)
-      }
+      (err, res) => err ? callback(err) : callback(null, res.body)
     )
     return promise
   }

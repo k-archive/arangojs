@@ -25,10 +25,7 @@ function joinPath (a = '', b = '') {
 }
 
 export default function (baseUrl, agentOptions, agent) {
-  console.log('...create request', baseUrl, agentOptions, agent)
   const baseUrlParts = parseUrl(baseUrl)
-  console.log('-- baseUrlParts --')
-  console.log(baseUrlParts)
   const isTls = baseUrlParts.protocol === 'https:'
 
   if (!agent) {
@@ -51,7 +48,6 @@ export default function (baseUrl, agentOptions, agent) {
   }
 
   function request ({method, url, headers, body, expectBinary}, cb) {
-    console.log('doing request', {method, url, headers, body, expectBinary})
     let path = baseUrlParts.pathname ? (
       url.pathname ? joinPath(baseUrlParts.pathname, url.pathname) : baseUrlParts.pathname
     ) : url.pathname
@@ -64,13 +60,14 @@ export default function (baseUrl, agentOptions, agent) {
     options.port = baseUrlParts.port
     options.auth = baseUrlParts.auth
 
+    console.log('...doing request', options)
+
     queue.push((next) => {
       let callback = (...args) => {
         callback = () => undefined
         next()
         cb(...args)
       }
-      console.log('...options', options)
       const req = (isTls ? https : http).request(options, (res) => {
         const data = []
         res
